@@ -2,6 +2,7 @@ python-dotenv # Used to call env variables
 pandas
 numpy
 pymongo
+pymongo[srv]==3.6
 certifi
 # -e . is used to refer to setup.py
 #-e .
