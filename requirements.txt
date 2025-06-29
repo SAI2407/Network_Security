@@ -6,5 +6,7 @@ certifi
 scikit-learn
 scipy >= 1.5
 pyaml
+dill
+mlflow
 # -e . is used to refer to setup.py
 #-e .

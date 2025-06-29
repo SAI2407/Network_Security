@@ -22,7 +22,7 @@ class DataValidation:
     @staticmethod
     def read_data(file_path)->pd.DataFrame:
         try:
-            return pd.read_csv(file_path)
+            return pd.read_csv(file_path , delimiter="\t")
         except Exception as e:
             raise NetworkSecurityException(e,sys)
         
@@ -37,34 +37,40 @@ class DataValidation:
         except Exception as e:
             raise NetworkSecurityException(e,sys)
         
-    def detect_dataset_drift(self,base_df,current_df,threshold=0.05)->bool:
-        try:
-            status=True
-            report={}
-            for column in base_df.columns:
-                d1=base_df[column]
-                d2=current_df[column]
-                is_same_dist=ks_2samp(d1,d2)
-                if threshold<=is_same_dist.pvalue:
-                    is_found=False
-                else:
-                    is_found=True
-                    status=False
-                report.update({column:{
-                    "p_value":float(is_same_dist.pvalue),
-                    "drift_status":is_found
-                    
-                    }})
-            drift_report_file_path = self.data_validation_config.drift_report_file_path
 
-            # Create directory
-            dir_path = os.path.dirname(drift_report_file_path)
-            os.makedirs(dir_path,exist_ok=True)
-            write_yaml_file(file_path=drift_report_file_path,content=report)
+    def detect_dataset_drift(self, base_df, current_df, threshold=0.05) -> bool:
+       try:
+        status = True
+        report = {}
 
-        except Exception as e:
-            raise NetworkSecurityException(e,sys)
-        
+        for column in base_df.columns:
+            d1 = base_df[column]
+            d2 = current_df[column]
+            ks_stat = ks_2samp(d1, d2)
+            p_value = float(ks_stat.pvalue)
+
+            drift_detected = p_value < threshold
+            if drift_detected:
+                status = False
+
+            report[column] = {
+                "p_value": p_value,
+                "drift_status": drift_detected
+            }
+
+        drift_report_file_path = self.data_validation_config.drift_report_file_path
+
+        # Create directory if it doesn't exist
+        dir_path = os.path.dirname(drift_report_file_path)
+        os.makedirs(dir_path, exist_ok=True)
+
+        write_yaml_file(file_path=drift_report_file_path, content=report)
+
+        return status
+       except Exception as e:
+           raise NetworkSecurityException(e, sys)
+
+    
     
     def initiate_data_validation(self)->DataValidationArtifact:
         try:
